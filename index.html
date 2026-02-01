@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Be My Valentine 💖</title>
   <style>
     body {
@@ -68,6 +69,7 @@
       margin-top: 25px;
       font-size: 1.4em;
       font-weight: bold;
+      white-space: pre-wrap;
     }
 
     .hearts {
@@ -97,20 +99,23 @@
         opacity: 0;
       }
     }
+
+    /* Responsive tweaks */
+    @media (max-width: 480px) {
+      .card { padding: 24px; max-width: 320px; }
+      h1 { font-size: 1.8em; }
+      p { font-size: 1em; }
+      .heart { font-size: 16px; }
+    }
   </style>
 </head>
 <body>
 
-  <!-- Background Music -->
-  <audio autoplay loop>
-    <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg">
-  </audio>
-
-  <div class="card">
+  <div class="card" id="card">
     <h1>Hey My Milkshakes 💕</h1>
     <p>Every day with you is special…<br>Will you be my Valentine? 💖</p>
 
-    <button class="yes" onclick="sayYes()">Yes 💘</button>
+    <button class="yes" id="yesBtn" onclick="sayYes()">Yes 💘</button>
     <button class="no" id="noBtn">No 🙈</button>
 
     <div id="response"></div>
@@ -118,20 +123,48 @@
 
   <div class="hearts" id="hearts"></div>
 
+  <!-- Hidden YouTube player; playback will start after user presses Yes -->
+  <div id="player" style="width:0;height:0;overflow:hidden;position:absolute;left:-9999px;"></div>
+
+  <script src="https://www.youtube.com/iframe_api"></script>
   <script>
-    function sayYes() {
-      document.getElementById("response").innerHTML =
-        "YAY!!! 💖💖💖<br>I’m the luckiest person alive 😍<br>Happy Valentine’s Day, My Milkshakes 🥹💕";
-      createHearts();
+    // YouTube player setup
+    let player;
+    function onYouTubeIframeAPIReady() {
+      player = new YT.Player('player', {
+        height: '0',
+        width: '0',
+        videoId: 'XMMP-T3EF8s',
+        playerVars: { 'playsinline': 1, 'rel': 0, 'controls': 0 },
+      });
     }
 
+    function sayYes() {
+      // Exact response per request
+      document.getElementById("response").textContent = "YAY!!! 💖💖💖 I’m the luckiest person alive 😍";
+      createHearts();
+
+      // Start playback — this is a user gesture so browsers should allow it
+      if (player && typeof player.playVideo === 'function') {
+        try { player.playVideo(); } catch (e) { console.warn('Player not ready', e); }
+      }
+    }
+
+    // Constrain the No button to stay inside the card
     const noBtn = document.getElementById("noBtn");
+    const card = document.getElementById("card");
 
     noBtn.addEventListener("mouseover", () => {
-      const x = Math.random() * (window.innerWidth - 100);
-      const y = Math.random() * (window.innerHeight - 100);
-      noBtn.style.left = x + "px";
+      const cardRect = card.getBoundingClientRect();
+      const btnWidth = noBtn.offsetWidth;
+      const btnHeight = noBtn.offsetHeight;
+
+      const x = Math.random() * (cardRect.width - btnWidth);
+      const y = Math.random() * (cardRect.height - btnHeight - 10) + 10; // keep a small margin
+
+      noBtn.style.left = (cardRect.left + x - cardRect.left) + "px";
       noBtn.style.top = y + "px";
+      noBtn.style.position = 'absolute';
     });
 
     function createHearts() {
